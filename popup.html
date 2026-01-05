@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UT LMS Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 450px;
+            min-height: 500px;
+            max-height: 600px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow-y: auto;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .course-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .course-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .course-info {
+            flex: 1;
+        }
+
+        .course-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 3px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .course-name:hover {
+            color: #4f5bd5;
+            text-decoration: underline;
+        }
+
+        .course-name.empty-name {
+            color: #999;
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        .course-name.empty-name:hover {
+            color: #667eea;
+        }
+
+        .course-code {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .course-link {
+            text-decoration: none;
+            color: #667eea;
+            font-size: 20px;
+            transition: transform 0.2s;
+        }
+
+        .course-link:hover {
+            transform: scale(1.2);
+        }
+
+        .checklist {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            background: #f8f9ff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .checklist-item:hover {
+            background: #e8ebff;
+        }
+
+        .checklist-item.checked {
+            background: #d4edda;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .checklist-label {
+            font-size: 13px;
+            color: #333;
+            flex: 1;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checklist-item.checked .checklist-label {
+            color: #155724;
+            font-weight: 500;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: opacity 0.2s;
+        }
+
+        .action-btn:hover {
+            opacity: 0.9;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: white;
+        }
+
+        .empty-state p {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .stats-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 10px;
+            background: #f8f9ff;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 UT LMS Tracker</h1>
+            <p>Manual Checklist per Mata Kuliah</p>
+        </div>
+
+        <div id="loading" class="loading">
+            <p>⏳ Memuat data...</p>
+        </div>
+
+        <div id="message" style="display: none;"></div>
+
+        <div id="content" style="display: none;">
+            <!-- Summary Stats -->
+            <div class="stats-summary">
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" id="total-attendance">0</div>
+                        <div class="stat-label">Absensi ✅</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="total-tasks">0</div>
+                        <div class="stat-label">Tugas 📝</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="total-discussions">0</div>
+                        <div class="stat-label">Diskusi 💬</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course List with Checklists -->
+            <div id="course-list"></div>
+
+            <!-- Refresh Button -->
+            <button id="refresh-btn" class="action-btn">🔄 Refresh Mata Kuliah</button>
+
+            <!-- Manual Add Course -->
+            <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 12px;">
+                <div style="font-size: 12px; color: #666; margin-bottom: 10px;">Atau tambah manual:</div>
+                <input type="text" id="manual-course-name" placeholder="Nama Mata Kuliah"
+                    style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px;">
+                <input type="text" id="manual-course-code" placeholder="Kode (contoh: MKWN4108)"
+                    style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px;">
+                <button id="add-manual-btn" class="action-btn" style="margin-top: 0;">➕ Tambah</button>
+            </div>
+        </div>
+
+        <div id="empty-state" class="empty-state" style="display: none;">
+            <p>🎓 Belum ada mata kuliah terdeteksi</p>
+            <p><small>Buka halaman elearning.ut.ac.id dan klik Refresh</small></p>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

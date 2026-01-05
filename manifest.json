@@ -1,0 +1,28 @@
+{
+    "manifest_version": 3,
+    "name": "UT LMS Assistant",
+    "version": "1.0",
+    "description": "Membantu tracking Absensi, Diskusi, dan Tugas di elearning UT.",
+    "permissions": [
+        "storage",
+        "activeTab"
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icon16.png",
+            "48": "icon48.png",
+            "128": "icon128.png"
+        }
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://elearning.ut.ac.id/*"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
+}
