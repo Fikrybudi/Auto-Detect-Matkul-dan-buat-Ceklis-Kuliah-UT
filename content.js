@@ -30,29 +30,38 @@ function scrapeCourses() {
     const courses = [];
     const seenIds = new Set();
 
-    // METHOD 1: Course cards with titles and links
-    console.log('Method 1: Checking course cards...');
-    const cards = document.querySelectorAll('.card, .coursebox, [class*="course"]');
-    console.log('Found potential cards:', cards.length);
+    // METHOD 1: Dashboard course overview cards (usually has full name)
+    console.log('Method 1: Checking dashboard course cards...');
+    const dashboardCards = document.querySelectorAll('.course-info-container, .coursebox, .card[data-region="course-content"], .dashboard-card, [data-region="myoverview"] .card');
+    console.log('Found dashboard cards:', dashboardCards.length);
 
-    cards.forEach((card, index) => {
+    dashboardCards.forEach((card) => {
         try {
-            // Look for course title - try multiple selectors
-            let titleEl = card.querySelector('h3');
-            if (!titleEl) titleEl = card.querySelector('.coursename');
-            if (!titleEl) titleEl = card.querySelector('[role="heading"]');
+            // Look for course name - try multiple selectors for full name
+            let titleEl = card.querySelector('.coursename, .fullname, h3 a, h4 a, .course-title, .multiline');
+            if (!titleEl) titleEl = card.querySelector('[data-action="link-to-course"]');
+            if (!titleEl) titleEl = card.querySelector('a[href*="/course/view.php"]');
 
             // Look for course link
             let linkEl = card.querySelector('a[href*="/course/view.php"]');
             if (!linkEl) linkEl = card.querySelector('a[href*="id="]');
 
-            if (titleEl && linkEl) {
-                const rawName = titleEl.textContent.trim();
+            if (linkEl) {
                 const url = linkEl.href;
                 const id = extractCourseId(url);
 
-                // Skip if already added or invalid
-                if (seenIds.has(id) || rawName.length < 3) return;
+                if (seenIds.has(id)) return;
+
+                // Get name from title element or link
+                let rawName = '';
+                if (titleEl) {
+                    // Try to get from title attribute first (often has full name)
+                    rawName = titleEl.getAttribute('title') || titleEl.textContent.trim();
+                } else {
+                    rawName = linkEl.getAttribute('title') || linkEl.textContent.trim();
+                }
+
+                if (rawName.length < 3) return;
 
                 // Skip button text and UI elements
                 const lowerCardName = rawName.toLowerCase();
@@ -68,21 +77,21 @@ function scrapeCourses() {
                 courses.push({
                     id: id,
                     name: name,
-                    code: code || name.substring(0, 20),
+                    code: code || name.substring(0, 10),
                     url: url
                 });
 
-                console.log(`  Found: ${name} (${code || 'no code'})`);
+                console.log(`  Found: ${name} | Code: ${code || 'no code'}`);
             }
         } catch (e) {
             console.warn('Error processing card:', e);
         }
     });
 
-    // METHOD 2: Navigation/sidebar links
+    // METHOD 2: Navigation/sidebar links - Try to get full course name
     if (courses.length === 0) {
         console.log('Method 2: Checking navigation links...');
-        const navLinks = document.querySelectorAll('nav a, .navigation a, aside a, .sidebar a');
+        const navLinks = document.querySelectorAll('nav a, .navigation a, aside a, .sidebar a, [data-key="mycourses"] a, .block_navigation a');
         console.log('Found nav links:', navLinks.length);
 
         navLinks.forEach(link => {
@@ -101,16 +110,46 @@ function scrapeCourses() {
 
                 seenIds.add(id);
                 const code = extractCourseCode(rawName);
-                const name = cleanCourseName(rawName);
+
+                // Try to get course name from various sources
+                let name = '';
+
+                // 1. Check title attribute
+                if (link.title) {
+                    name = cleanCourseName(link.title);
+                }
+
+                // 2. Check aria-label
+                if (!name && link.getAttribute('aria-label')) {
+                    name = cleanCourseName(link.getAttribute('aria-label'));
+                }
+
+                // 3. Check parent's title
+                if (!name && link.parentElement && link.parentElement.title) {
+                    name = cleanCourseName(link.parentElement.title);
+                }
+
+                // 4. Check for span with course fullname
+                if (!name) {
+                    const fullnameSpan = link.querySelector('.coursename, .fullname, [class*="name"]');
+                    if (fullnameSpan) {
+                        name = cleanCourseName(fullnameSpan.textContent);
+                    }
+                }
+
+                // 5. Fallback to cleaned raw name
+                if (!name) {
+                    name = cleanCourseName(rawName);
+                }
 
                 courses.push({
                     id: id,
                     name: name,
-                    code: code || name.substring(0, 20),
+                    code: code || rawName.substring(0, 10),
                     url: url
                 });
 
-                console.log(`  Found: ${name} (${code || 'no code'})`);
+                console.log(`  Found: ${name} | Code: ${code || 'no code'}`);
             }
         });
     }
